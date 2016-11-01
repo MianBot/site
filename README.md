@@ -1,7 +1,7 @@
 # site
 
 ## Hierarchy of layout
-
+```
 .
 └── index
    ├── login
@@ -16,3 +16,4 @@
    ├── doc
    ├── about
    └── deom
+```
