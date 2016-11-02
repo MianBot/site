@@ -13,7 +13,12 @@
    │   ├── qa_manager
    │   ├── profile
    │   └── log
+   ├── asset
+   │   ├── js
+   │   ├── css
+   │   ├── image
+   |   └── fonts
    ├── doc
    ├── about
-   └── deom
+   └── demo
 ```
