@@ -76,7 +76,7 @@ def register(request):
 			else:
 				return HttpResponse("Account Exist!!")
 	form = IdForm()
-	return render(request, 'create_article.html', {'form': form})
+	return render(request, 'register.html', {'form': form})
 @csrf_exempt
 def login(request):
 	if 'user' in request.session:
@@ -157,7 +157,6 @@ def log_data(request):
 	if request.method == 'POST':
 		out = json.loads(request.body.decode())
 		qdata = ''.join(str(o) for o in out)
-		print(qdata)
 		QuestionForm.objects.create(account=request.session['user'],data=qdata)
 		return HttpResponse("Please input rule!!")
 	return HttpResponse("Please input rule!!")
