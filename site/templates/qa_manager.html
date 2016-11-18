@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html >
+{% load static %}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+</head>
+<body>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+	<link rel="stylesheet" href="{% static 'qa_css/css/xeditable.css' %}">
+	<script src="{% static 'qa_css/js/xeditable.js' %}"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ng-tags-input/3.1.1/ng-tags-input.min.js"></script>
+	<link href="{% static 'qa_css/css/ng-tags-input.css' %}" rel="stylesheet" media="screen">
+	<link href="{% static 'qa_css/css/ng-tags-input.bootstrap.css' %}" rel="stylesheet" media="screen">
+	<script>
+	(function(){
+	var app = angular.module("app", ["xeditable", "ngTagsInput"]);
+  //var app = angular.module('rule', ["xeditable"],function($interpolateProvider) {$interpolateProvider.startSymbol('[[').endSymbol(']]');});
+
+  app.controller('NgTagsCtrl', function($scope, $http) {
+	$scope.contents = null;
+	$http.get("{% static 'qa_css/qa_data.json' %}") //get data
+        .success(function(data) {
+            $scope.contents = data;
+        })
+        .error(function(data,status,error,config){
+            $scope.contents = [{question:"Error",answers:"Could not load data"}];
+        });
+	$scope.loadTags = function(query) {	//load answers
+		return $http.get('/tags?query=' + query);
+	};
+	$scope.newrule={"question":"","answers":""}
+    $scope.newadd = function()	//add question (not finish)
+    {
+		$scope.contents.push($scope.newrule);
+		$scope.newrule={"question":"","answers":""};
+	}
+	$scope.data_submit = function(data) 
+	{
+		alert($scope.contents);
+		$http({
+            method: 'POST',
+            url: 'http://127.0.0.1:8000/log_data/',
+            data: 
+                $scope.contents
+            
+        })
+		.success(function(data, status, headers, config) {
+            console.log(data);
+            console.log(status);
+        })
+        .error(function(data, status, headers, config) {
+            // Error
+        });
+
+	};
+});
+
+})();
+
+	</script>
+	<div ng-app="app" ng-controller="NgTagsCtrl">
+		<form data-editable-form name="responseForm">
+			<div ng-repeat="content in contents">
+				問題 :
+				<input ng-model="content.question" min-length="1" placeholder="輸入問題" >
+				<br>
+				答案 :
+				<tags-input ng-model="content.answers" min-length="1" placeholder="增加答案" >
+					<auto-complete source="loadTags($query)" ng-show="false"></auto-complete>
+				</tags-input>
+				<br>
+			</div>
+			<button type="button" ng-click="newadd()" class = "btn">
+			增加問題
+			</button>
+			<button type="button" ng-click="data_submit(content)" class = "btn">
+			儲存
+			</button>	
+		</form>
+		<form action="http://127.0.0.1:8000/logout/" method="POST">
+		<button type="submit">登出</input>
+		</form>
+	</div>
+</body>
+</html>

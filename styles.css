@@ -1,0 +1,46 @@
+.login_form {
+border: 1px solid #AAA;
+padding:10px;
+}
+h3 {margin-top:3px;}
+.chat_main {
+border:1px solid #AAA;
+-moz-box-shadow:0 0 10px #ccc;
+-webkit-box-shadow: 0 0 10px #ccc;
+width:350px;
+padding:10px;
+background:#f3f3f3;
+}
+.message {
+border:1px solid #AAA;
+margin:4px;
+padding:5px;
+-moz-border-radius:7px;
+-webkit-border-radius:7px;
+background:#ffffff;
+}
+.textf {
+-moz-box-shadow:0 0 10px #CCCCCC;
+-webkit-box-shadow:0 0 10px #CCCCCC;
+border:1px solid #CCCCCC;
+height:40px;
+}
+.submit {
+-moz-border-radius:7px;
+-webkit-border-radius:7px;
+background:#F3F3F3;
+border:1px solid #CCCCCC;
+font-size:16px;
+font-weight:bold;
+height:35px;
+margin-left:10px;
+padding:5px;
+}
+.message span {
+font-size:10px;
+color:#888;
+margin-left:10px;
+}
+.submit_form {
+margin:10px 0px;
+}

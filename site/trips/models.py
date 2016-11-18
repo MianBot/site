@@ -31,6 +31,13 @@ class StateForm(models.Model):
 	def __unicode__(self):
 		return self.account
 		
+class QuestionForm(models.Model):
+	account = models.CharField(max_length=100)
+	data = models.TextField(u'data')
+
+	def __unicode__(self):
+		return self.account
+		
 class LogForm(models.Model):
 	user = models.CharField(max_length=100)
 	logData = models.CharField(u'logData', max_length=50, null=True, blank=True)

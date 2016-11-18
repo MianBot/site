@@ -7,6 +7,10 @@ from trips.models import Article
 from trips.models import IDForm
 from trips.models import StateForm
 from trips.models import LogForm
+from trips.models import QuestionForm
+from django.views.decorators.csrf import csrf_exempt 
+from django.contrib.sessions.models import Session
+import requests
 import os
 import json
 import random
@@ -14,6 +18,7 @@ import subprocess, sys
 from django import forms
 from Chatbot import chatbot
 import re
+import hashlib
 
 class ArticleForm(forms.ModelForm):
 	class Meta:
@@ -28,12 +33,17 @@ class PostForm(forms.ModelForm):
 class IdForm(forms.ModelForm):
 	class Meta:
 		model = IDForm
-		fields = ['account', 'password','userRule']
+		fields = ['account', 'password']
 
 class stateForm(forms.ModelForm):
 	class Meta:
 		model = StateForm
 		fields = ['account', 'password','userRule']
+		
+class questionForm(forms.ModelForm):
+	class Meta:
+		model = QuestionForm
+		fields = ['account', 'data']
 
 def creates(request):
 	if request.method == 'POST':
@@ -47,6 +57,8 @@ def creates(request):
 	return render(request, 'create_article.html', {'form': form})
 
 def register(request):
+	if 'user' in request.session:
+		return render(request, 'qa_manager.html')
 	if request.method == 'POST':
 		form = stateForm(request.POST)
 		new_article = form.save()
@@ -56,6 +68,10 @@ def register(request):
 			if len(post) == 0:
 				IDForm.objects.create(account=new_article.account,password=new_article.password,userRule="",login_stats=False)
 				print("pass",new_article.account,new_article.password)
+				user_key = "".join(chr(ord(a)^ord(b)) for a,b in zip(new_article.account,"DtA50SzxQ76MMzp13Qt"))
+				m = hashlib.md5()
+				m.update(user_key.encode('utf-8'))
+				print(m.digest())
 				return HttpResponse("success")
 			else:
 				return HttpResponse("Account Exist!!")
@@ -63,6 +79,8 @@ def register(request):
 	return render(request, 'create_article.html', {'form': form})
 
 def login(request):
+	if 'user' in request.session:
+		return render(request, 'qa_manager.html')
 	if request.method == 'POST':
 		form = stateForm(request.POST)
 		new_article = form.save()
@@ -73,84 +91,86 @@ def login(request):
 			else:
 				data = IDForm.objects.get(account=new_article.account).password
 				if data == new_article.password:
-					if IDForm.objects.get(account=new_article.account).login_stats == False:
-						IDForm.objects.filter(account=new_article.account).update(login_stats=True)
-						return HttpResponse("login success.")
-					else:
-						return HttpResponse("Your account is in our system!!")
+					user_key = "".join(chr(ord(a)^ord(b)) for a,b in zip(new_article.account,"DtA50SzxQ76MMzp13Qt"))
+					request.session['user'] = new_article.account
+					m = hashlib.md5()
+					m.update(user_key.encode('utf-8'))
+					print(m.digest())
+					return HttpResponse("login success.")
 				else:
 					return HttpResponse("Wrong Account or Password")
 	form = IdForm()
 	return render(request, 'create_article.html', {'form': form})
 
-def user_input(request):
+def user_rule(request):
 	if request.method == 'POST':
 		form = stateForm(request.POST)
 		new_article = form.save()
-		if form.is_valid():
-			post = IDForm.objects.filter(account=new_article.account)
-			if len(post) == 0:
-				return HttpResponse("Invaild Access!!")
+		if 'user' in request.session:
+			user = request.session['user']
+			print(user)
+			#post = IDForm.objects.filter(account=new_article.account)
+			if new_article.userRule is None:
+				return HttpResponse("Please input rule!!")
 			else:
-				data = IDForm.objects.get(account=new_article.account).password
-				if data == new_article.password:
-					if IDForm.objects.get(account=new_article.account).login_stats == True:
-						IDForm.objects.filter(account=new_article.account).update(userRule=IDForm.objects.get(account=new_article.account).userRule + new_article.userRule)
-						return HttpResponse("rule update success.")
-					else:
-						IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-						return HttpResponse("Invaild Access!!")
+				data = IDForm.objects.get(account=user).userRule.split('#')
+				if data is '':
+					IDForm.objects.filter(account=user).update(userRule=data)
 				else:
-					return HttpResponse("Invaild Access!!")
+					data.append(new_article.userRule)
+					IDForm.objects.filter(account=user).update(userRule='#'.join(data))
+			#	if data == new_article.password:
+				return HttpResponse("rule update success.")
+			#	else:
+			#		return HttpResponse("Invaild Access!!")
+		else:
+			return HttpResponse("Error: You are not login!!")
 	form = IdForm()
-	return render(request, 'create_article.html', {'form': form})
-
-def logout(request):
-	if request.method == 'POST':
-		form = stateForm(request.POST)
-		new_article = form.save()
-		if form.is_valid():
-			post = IDForm.objects.filter(account=new_article.account)
-			if len(post) == 0:
-				return HttpResponse("System Error!!")
-			else:
-				data = IDForm.objects.get(account=new_article.account).password
-				if data == new_article.password:
-					if IDForm.objects.get(account=new_article.account).login_stats == True:
-						IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-						return HttpResponse("logout success.")
-					else:
-						IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-						return HttpResponse("System Error!! Account logout!!")
-				else:
-					IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-					return HttpResponse("System Error!! Account logout!!")
-	form = IdForm()
+	if 'user' in request.session:
+		return render(request, 'qa_manager.html')
 	return render(request, 'create_article.html', {'form': form})
 	
-def log_input(request):
-	if request.method == 'POST':
-		form = stateForm(request.POST)
-		new_article = form.save()
-		if form.is_valid():
-			post = IDForm.objects.filter(account=new_article.account)
-			if len(post) == 0:
-				return HttpResponse("System Error!!")
-			else:
-				data = IDForm.objects.get(account=new_article.account).password
-				if data == new_article.password:
-					if IDForm.objects.get(account=new_article.account).login_stats == True:
-						IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-						return HttpResponse("logout success.")
-					else:
-						IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-						return HttpResponse("System Error!! Account logout!!")
-				else:
-					IDForm.objects.filter(account=new_article.account).update(login_stats=False)
-					return HttpResponse("System Error!! Account logout!!")
-	form = IdForm()
+@csrf_exempt
+def user_test(request):
+	if 'content' in request.GET:
+		post_data =  {'frontId': 'test', 'content': request.GET['content']}     # a sequence of two element tuples
+		response = requests.post('http://140.116.245.156:45002/question_data/', data=post_data)
+		content = response.content
+		return HttpResponse(content)
+	form = ArticleForm()
 	return render(request, 'create_article.html', {'form': form})
+	
+def user_test_UI(request):
+	return render(request, 'index.html')
+	
+def style_css(request):
+	return render(request, 'style.css')
+	
+def chat_js(request):
+	return render(request, 'chat.js')
+	
+def process_php(request):
+	return render(request, 'process.php')
 
+@csrf_exempt	
+def log_data(request):
+	if request.method == 'POST':
+		out = json.loads(request.body.decode())
+		qdata = ''.join(str(o) for o in out)
+		print(qdata)
+		QuestionForm.objects.create(account=request.session['user'],data=qdata)
+		return HttpResponse("Please input rule!!")
+	return HttpResponse("Please input rule!!")
+
+@csrf_exempt	
+def logout(request):
+	if 'user' in request.session:
+		del request.session['user']
+		return HttpResponse("logout success.")
+	else:
+		return HttpResponse("Error: You are not login!!")
+
+@csrf_exempt
 def question_data(request):
 	global output
 	if request.method == 'POST':
@@ -164,25 +184,46 @@ def question_data(request):
 					if len(post) == 0:
 						break
 					#print(output[1])
-				output = chatb.listen(new_article.content)
+				output = chatb.listenForDomains(new_article.content)
 				if output[1] is not None:
 					Post.objects.create(iden=myid,content=output[1],domain = chatb.root_domain)
-					return HttpResponse(json.dumps({'ID':str(myid),'reply':output[0]}))
+					user_key = "".join(chr(ord(a)^ord(b)) for a,b in zip(request.session['user'],"DtA50SzxQ76MMzp13Qt"))
+					m = hashlib.md5()
+					m.update(user_key.encode('utf-8'))
+					print(m.digest())
+					print(chatb.getLoggerData())
+					if 'user' in request.session:
+						logger = chatb.getLoggerData()
+						LogForm.objects.create(user = request.session['user'],
+							logData = list(logger[2]),
+							feature = logger[1],
+							locate = "")
+					
+					return HttpResponse(json.dumps({'ID':str(myid),'reply':output[0]}, ensure_ascii=False))
 					#return render(request, 'get.html', {'form': form,'data': str(myid)+"#"+output[0]})
 				#print(str(myid)+'#'+output[0])
 				else:
-					return HttpResponse(json.dumps({'reply':output[0]}))
+					if 'user' in request.session:
+						logger = chatb.getLoggerData()
+						LogForm.object.create(user = request.session['user'],
+							logData = list(logger[2]),
+							feature = logger[1],
+							locate = "")
+					return HttpResponse(json.dumps({'reply':output[0]}, ensure_ascii=False))
 					#return render(request, 'get.html', {'form': form,'data': output[0]})
+			elif new_article.frontId == 'test':
+				output = chatb.listenForDomains(new_article.content)
+				return HttpResponse(json.dumps({'reply':output[0]}, ensure_ascii=False))
 			else:
 				post = Post.objects.filter(iden=new_article.frontId)
 				if len(post) == 0:
 					print('your Id have ERROR!!')
-					return HttpResponse(json.dumps({'reply':'your Id have ERROR!!'}))
+					return HttpResponse(json.dumps({'reply':'your Id have ERROR!!'}, ensure_ascii=False))
 					#return render(request, 'get.html', {'form': form,'data': 'your Id have ERROR!!'})
 				else:
 					data = Post.objects.get(iden=new_article.frontId).content
 					chatb.root_domain = Post.objects.get(iden=new_article.frontId).domain
-					output = chatb.listen(new_article.content)
+					output = chatb.listenForDomains(new_article.content)
 					temp = list(output[1])
 					for i in range(0, len(temp), 1):
 						if temp[i] != data[i]:
@@ -196,13 +237,19 @@ def question_data(request):
 								data[i] = temp[i]
 					print("".join(data))
 					print(len(temp))
+					if 'user' in request.session:
+						logger = chatb.getLoggerData()
+						LogForm.object.create(user = request.session['user'],
+							logData = list(logger[2]),
+							feature = logger[1],
+							locate = "")
 					if output[1] is not None:
 						Post.objects.filter(iden=new_article.frontId).update(content="".join(data))
-						return HttpResponse(json.dumps({'ID':new_article.frontId,'reply':output[0]}))
+						return HttpResponse(json.dumps({'ID':new_article.frontId,'reply':output[0]}, ensure_ascii=False))
 						#return render(request, 'get.html', {'form': form,'data': new_article.frontId+'#'+output[0]})
 					else:
 						Post.objects.get(iden=new_article.frontId).delete()
-						return HttpResponse(json.dumps({'ID':new_article.frontId,'reply':output[0]}))
+						return HttpResponse(json.dumps({'ID':new_article.frontId,'reply':output[0]}, ensure_ascii=False))
 						#return render(request, 'get.html', {'form': form,'data': output[0]})
 					#print(Post.objects.get(iden=new_article.frontId).content.split('#'))
 					
