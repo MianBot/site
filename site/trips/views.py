@@ -77,7 +77,7 @@ def register(request):
 				return HttpResponse("Account Exist!!")
 	form = IdForm()
 	return render(request, 'create_article.html', {'form': form})
-
+@csrf_exempt
 def login(request):
 	if 'user' in request.session:
 		return render(request, 'qa_manager.html')
