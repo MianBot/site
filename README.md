@@ -2,7 +2,7 @@
 
 ## Hierarchy of layout
 ```
-.
+Mianbot
 └── index
    ├── login
    ├── register   
@@ -16,7 +16,7 @@
    ├── asset
    │   ├── js
    │   ├── css
-   │   ├── image
+   │   ├── img
    |   └── fonts
    ├── doc
    ├── about
