@@ -21,6 +21,10 @@ body {
   color:rgb(235,235,235);
 }
 
+.navbar-right{
+  float: right !important;
+}
+
 .mian:hover{
   color:rgb(91, 192, 222);
   text-decoration: none;
@@ -29,6 +33,7 @@ body {
 
 .sidebar-background{
   background-image: url("../../img/sidebar.jpg") !important;
+  background-size: cover;
   position:fixed;
   height: 100%;
   z-index: -87;
@@ -41,6 +46,8 @@ body {
 }
 
 .white-navbar{
+  border-left: none !important;
+  border-right: none !important;
   height: 60px !important;
   transition: all .2s;
   border-radius: 0px;
@@ -83,6 +90,14 @@ body {
     border-color: rgb(91, 192, 222) !important;
     color:rgb(91, 192, 222);
     transition: all .3s;
+    margin-right: 10px !important;
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 12px;
+    line-height: 1.428571429;
+    border-radius: 18px;
 }
 
 .btn-primary.btn-outline {
