@@ -39,7 +39,7 @@
 }
 
 #page-content-wrapper {
-    position: absolute;
+    position: relative;
 
     width: 100%;
     overflow-x: hidden;
